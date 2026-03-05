@@ -7,12 +7,14 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useCustomer } from '../../context/CustomerContext';
 import { Customer, getAllCustomers } from '../../database/customers';
 
 export default function SelectCustomerScreen() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [query, setQuery] = useState('');
+  const { setSelectedCustomer } = useCustomer();
 
   useEffect(() => {
     setCustomers(getAllCustomers());
@@ -23,12 +25,8 @@ export default function SelectCustomerScreen() {
   );
 
   const handleSelect = (customer: Customer) => {
+    setSelectedCustomer({ id: customer.id, name: customer.name });
     router.back();
-    // Pass selected customer back to create report screen via params
-    router.setParams({
-      customerId: customer.id.toString(),
-      customerName: customer.name,
-    });
   };
 
   const handleNewCustomer = () => {
@@ -91,7 +89,7 @@ export default function SelectCustomerScreen() {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

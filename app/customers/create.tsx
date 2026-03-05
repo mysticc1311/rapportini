@@ -6,11 +6,12 @@ import {
     StyleSheet,
     Text, TextInput, TouchableOpacity
 } from 'react-native';
+import { useCustomer } from '../../context/CustomerContext';
 import { addCustomer, NewCustomer } from '../../database/customers';
 
 export default function CreateCustomerScreen() {
   const router = useRouter();
-
+  const { setSelectedCustomer } = useCustomer();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
@@ -27,14 +28,9 @@ export default function CreateCustomerScreen() {
     };
 
     const result = addCustomer(customer);
-    const newId = result.lastInsertRowId;
 
-    // Go back to select-customer, then set params so create-report picks up the new customer
+    setSelectedCustomer({ id: result.lastInsertRowId, name: name.trim() });
     router.dismissTo('/reports/create');
-    router.setParams({
-      customerId: newId.toString(),
-      customerName: name.trim(),
-    });
   };
 
   return (

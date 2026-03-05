@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
     Alert,
     ScrollView,
@@ -7,40 +7,25 @@ import {
     Text, TextInput, TouchableOpacity,
     View
 } from 'react-native';
+import { useCustomer } from '../../context/CustomerContext';
 import { addReport, NewReport } from '../../database/reports';
 
 export default function CreateReportScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    customerId?: string;
-    customerName?: string;
-  }>();
+  const { selectedCustomer, setSelectedCustomer } = useCustomer();
 
   const [activity, setActivity] = useState('');
   const [date, setDate] = useState('');
   const [timeStart, setTimeStart] = useState('');
   const [timeEnd, setTimeEnd] = useState('');
   const [notes, setNotes] = useState('');
-  const [customerId, setCustomerId] = useState<number | null>(null);
-  const [customerName, setCustomerName] = useState('');
-
-  // When coming back from select-customer or create-customer
-  useEffect(() => {
-    if (params.customerId && params.customerName) {
-      setCustomerId(Number(params.customerId));
-      setCustomerName(params.customerName);
-    }
-  }, [params.customerId, params.customerName]);
 
   const handleSave = () => {
-    if (!activity.trim()) return Alert.alert('Validation', 'Activity is required.');
-    if (!customerId) return Alert.alert('Validation', 'Please select a customer.');
-    if (!date.trim()) return Alert.alert('Validation', 'Date is required.');
-    if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert('Validation', 'Start and end time are required.');
-
+    if (!selectedCustomer) return Alert.alert('Validation', 'Please select a customer.');
+    
     const report: NewReport = {
       activity: activity.trim(),
-      customer_id: customerId,
+      customer_id: selectedCustomer.id,
       date: date.trim(),
       time_start: timeStart.trim(),
       time_end: timeEnd.trim(),
@@ -48,6 +33,7 @@ export default function CreateReportScreen() {
     };
 
     addReport(report);
+    setSelectedCustomer(null); // resetta per la prossima volta
     router.back();
   };
 
@@ -73,10 +59,10 @@ export default function CreateReportScreen() {
         onPress={() => router.push({ pathname: '/reports/select-customer' })}
         activeOpacity={0.7}
       >
-        {customerName ? (
-          <Text style={styles.customerSelected}>{customerName}</Text>
-        ) : (
-          <Text style={styles.customerPlaceholder}>Select or create a customer...</Text>
+        {selectedCustomer ? (
+            <Text style={styles.customerSelected}>{selectedCustomer.name}</Text>
+            ) : (
+            <Text style={styles.customerPlaceholder}>Select or create a customer...</Text>
         )}
         <Text style={styles.chevron}>›</Text>
       </TouchableOpacity>

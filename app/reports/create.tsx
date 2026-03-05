@@ -19,10 +19,25 @@ export default function CreateReportScreen() {
   const [timeStart, setTimeStart] = useState('');
   const [timeEnd, setTimeEnd] = useState('');
   const [notes, setNotes] = useState('');
+  
+  const formatDateInput = (text: string): string => {
+    const digits = text.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
+  const formatTimeInput = (text: string): string => {
+    const digits = text.replace(/\D/g, '').slice(0, 4);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  };
 
   const handleSave = () => {
     if (!selectedCustomer) return Alert.alert('Validation', 'Please select a customer.');
-    
+    if (!date.trim()) return Alert.alert('Validation', 'Date is required.');
+    if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert('Validation', 'Start and end time are required.');
+
     const report: NewReport = {
       activity: activity.trim(),
       customer_id: selectedCustomer.id,
@@ -74,29 +89,32 @@ export default function CreateReportScreen() {
         placeholder="DD/MM/YYYY"
         placeholderTextColor="#475569"
         value={date}
-        onChangeText={setDate}
-        keyboardType="numeric"
+        onChangeText={(text) => setDate(formatDateInput(text))}
+        keyboardType="number-pad"
+        maxLength={10}
       />
-
-      {/* Time range */}
+      
+      {/* Time */}
       <Text style={styles.label}>Time <Text style={styles.required}>*</Text></Text>
       <View style={styles.timeRow}>
         <TextInput
           style={[styles.input, styles.timeInput]}
-          placeholder="Start  HH:MM"
+          placeholder="HH:MM"
           placeholderTextColor="#475569"
           value={timeStart}
-          onChangeText={setTimeStart}
-          keyboardType="numeric"
+          onChangeText={(text) => setTimeStart(formatTimeInput(text))}
+          keyboardType="number-pad"
+          maxLength={5}
         />
         <Text style={styles.timeSeparator}>→</Text>
         <TextInput
           style={[styles.input, styles.timeInput]}
-          placeholder="End  HH:MM"
+          placeholder="HH:MM"
           placeholderTextColor="#475569"
           value={timeEnd}
-          onChangeText={setTimeEnd}
-          keyboardType="numeric"
+          onChangeText={(text) => setTimeEnd(formatTimeInput(text))}
+          keyboardType="number-pad"
+          maxLength={5}
         />
       </View>
 

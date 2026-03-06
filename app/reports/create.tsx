@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text, TextInput, TouchableOpacity,
-    View
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View
 } from 'react-native';
 import { useCustomer } from '../../context/CustomerContext';
 import { addReport, NewReport } from '../../database/reports';
@@ -34,6 +34,7 @@ export default function CreateReportScreen() {
   };
 
   const handleSave = () => {
+    if (activity.trim() == '') return Alert.alert('Validation', 'Activity is required.')
     if (!selectedCustomer) return Alert.alert('Validation', 'Please select a customer.');
     if (!date.trim()) return Alert.alert('Validation', 'Date is required.');
     if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert('Validation', 'Start and end time are required.');

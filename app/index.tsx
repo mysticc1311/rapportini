@@ -1,19 +1,36 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { getAllReports, ReportWithCustomer } from '../database/reports';
+import { shareReportsPdf } from '../utils/pdf';
+
 
 export default function ReportsListScreen() {
   const router = useRouter();
   const [reports, setReports] = useState<ReportWithCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => shareReportsPdf(reports, 'All Field Reports')}
+          style={{ marginRight: 16 }}
+          disabled={reports.length === 0}
+        >
+          <Text style={{ fontSize: 22 }}>📤</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [reports]);
 
   useFocusEffect(
     useCallback(() => {
@@ -29,8 +46,13 @@ export default function ReportsListScreen() {
   const renderItem = ({ item }: { item: ReportWithCustomer }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.customerName}>{item.customer_name}</Text>
-        <Text style={styles.date}>{item.date}</Text>
+      <Text style={styles.customerName}>{item.customer_name}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={styles.date}>{item.date}</Text>
+          <TouchableOpacity onPress={() => shareReportsPdf([item], `Report – ${item.customer_name}`)}>
+            <Text style={{ fontSize: 16 }}>📤</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.activity}>{item.activity}</Text>
       <View style={styles.timeRow}>

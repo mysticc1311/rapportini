@@ -1,11 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    FlatList,
-    StyleSheet,
-    Text, TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text, TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useCustomer } from '../../context/CustomerContext';
 import { Customer, getAllCustomers } from '../../database/customers';
@@ -57,7 +58,7 @@ export default function SelectCustomerScreen() {
     <View style={styles.container}>
       {/* Search bar */}
       <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Text style={styles.searchIcon}><Ionicons name="search" size={18} color="#475569" style={{ marginRight: 8 }} /></Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search customers..."

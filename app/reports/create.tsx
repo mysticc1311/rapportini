@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -5,14 +6,21 @@ import {
   ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
-  View
+  View,
 } from 'react-native';
+import { Colors } from '../../constants/theme';
+import { t } from '../../constants/translations';
 import { useCustomer } from '../../context/CustomerContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { addReport, NewReport } from '../../database/reports';
 
 export default function CreateReportScreen() {
   const router = useRouter();
   const { selectedCustomer, setSelectedCustomer } = useCustomer();
+  const { theme } = useTheme();
+  const { language } = useLanguage();
+  const colors = Colors[theme];
 
   const [activity, setActivity] = useState('');
   const [date, setDate] = useState('');
@@ -34,10 +42,10 @@ export default function CreateReportScreen() {
   };
 
   const handleSave = () => {
-    if (activity.trim() == '') return Alert.alert('Validation', 'Activity is required.')
-    if (!selectedCustomer) return Alert.alert('Validation', 'Please select a customer.');
-    if (!date.trim()) return Alert.alert('Validation', 'Date is required.');
-    if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert('Validation', 'Start and end time are required.');
+    if (activity.trim() == '') return Alert.alert(t('validation', language), t('activityRequired', language))
+    if (!selectedCustomer) return Alert.alert(t('validation', language), t('customerRequired', language));
+    if (!date.trim()) return Alert.alert(t('validation', language), t('dateRequired', language));
+    if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert(t('validation', language), t('timeRequired', language));
 
     const report: NewReport = {
       activity: activity.trim(),
@@ -54,14 +62,14 @@ export default function CreateReportScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
       {/* Activity */}
-      <Text style={styles.label}>Activity <Text style={styles.required}>*</Text></Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('activity', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Describe the activity performed..."
-        placeholderTextColor="#475569"
+        style={[styles.input, styles.textArea, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('activityPlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={activity}
         onChangeText={setActivity}
         multiline
@@ -69,26 +77,26 @@ export default function CreateReportScreen() {
       />
 
       {/* Customer */}
-      <Text style={styles.label}>Customer <Text style={styles.required}>*</Text></Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('customer', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TouchableOpacity
-        style={[styles.input, styles.customerPicker]}
+        style={[styles.input, styles.customerPicker, { backgroundColor: colors.card, borderColor: colors.border }]}
         onPress={() => router.push({ pathname: '/reports/select-customer' })}
         activeOpacity={0.7}
       >
         {selectedCustomer ? (
-            <Text style={styles.customerSelected}>{selectedCustomer.name}</Text>
+            <Text style={[styles.customerSelected, { color: colors.tint }]}>{selectedCustomer.name}</Text>
             ) : (
-            <Text style={styles.customerPlaceholder}>Select or create a customer...</Text>
+            <Text style={[styles.customerPlaceholder, { color: colors.icon }]}>{t('customerPlaceholder', language)}</Text>
         )}
-        <Text style={styles.chevron}>›</Text>
+        <Text style={[styles.chevron, { color: colors.icon }]}>›</Text>
       </TouchableOpacity>
 
       {/* Date */}
-      <Text style={styles.label}>Date <Text style={styles.required}>*</Text></Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('date', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TextInput
-        style={styles.input}
-        placeholder="DD/MM/YYYY"
-        placeholderTextColor="#475569"
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('datePlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={date}
         onChangeText={(text) => setDate(formatDateInput(text))}
         keyboardType="number-pad"
@@ -96,22 +104,22 @@ export default function CreateReportScreen() {
       />
       
       {/* Time */}
-      <Text style={styles.label}>Time <Text style={styles.required}>*</Text></Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('time', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <View style={styles.timeRow}>
         <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="HH:MM"
-          placeholderTextColor="#475569"
+          style={[styles.input, styles.timeInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+          placeholder={t('timePlaceholder', language)}
+          placeholderTextColor={colors.icon}
           value={timeStart}
           onChangeText={(text) => setTimeStart(formatTimeInput(text))}
           keyboardType="number-pad"
           maxLength={5}
         />
-        <Text style={styles.timeSeparator}>→</Text>
+        <Ionicons name="arrow-forward" size={18} color="#475569" />
         <TextInput
-          style={[styles.input, styles.timeInput]}
-          placeholder="HH:MM"
-          placeholderTextColor="#475569"
+          style={[styles.input, styles.timeInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+          placeholder={t('timePlaceholder', language)}
+          placeholderTextColor={colors.icon}
           value={timeEnd}
           onChangeText={(text) => setTimeEnd(formatTimeInput(text))}
           keyboardType="number-pad"
@@ -120,11 +128,11 @@ export default function CreateReportScreen() {
       </View>
 
       {/* Notes */}
-      <Text style={styles.label}>Notes</Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('notes', language)}</Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Optional notes..."
-        placeholderTextColor="#475569"
+        style={[styles.input, styles.textArea, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('notesPlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={notes}
         onChangeText={setNotes}
         multiline
@@ -132,8 +140,8 @@ export default function CreateReportScreen() {
       />
 
       {/* Save */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.85}>
-        <Text style={styles.saveButtonText}>Save Report</Text>
+      <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.tint, shadowColor: colors.tint }]} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={[styles.saveButtonText, { color: colors.background }]}>{t('saveReport', language)}</Text>
       </TouchableOpacity>
 
     </ScrollView>
@@ -143,14 +151,12 @@ export default function CreateReportScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
   },
   content: {
     padding: 20,
     paddingBottom: 48,
   },
   label: {
-    color: '#94a3b8',
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -158,18 +164,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 20,
   },
-  required: {
-    color: '#38bdf8',
-  },
+  required: {},
   input: {
-    backgroundColor: '#1e293b',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#f1f5f9',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   textArea: {
     minHeight: 90,
@@ -182,16 +183,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   customerSelected: {
-    color: '#38bdf8',
     fontSize: 15,
     fontWeight: '600',
   },
   customerPlaceholder: {
-    color: '#475569',
     fontSize: 15,
   },
   chevron: {
-    color: '#475569',
     fontSize: 22,
     fontWeight: '300',
   },
@@ -205,23 +203,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   timeSeparator: {
-    color: '#475569',
     fontSize: 18,
   },
   saveButton: {
-    backgroundColor: '#38bdf8',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 36,
-    shadowColor: '#38bdf8',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 6,
   },
   saveButtonText: {
-    color: '#0f172a',
     fontSize: 16,
     fontWeight: '700',
   },

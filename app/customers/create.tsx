@@ -1,24 +1,31 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text, TextInput, TouchableOpacity
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
 } from 'react-native';
+import { Colors } from '../../constants/theme';
+import { t } from '../../constants/translations';
 import { useCustomer } from '../../context/CustomerContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { addCustomer, NewCustomer } from '../../database/customers';
 
 export default function CreateCustomerScreen() {
   const router = useRouter();
   const { setSelectedCustomer } = useCustomer();
+  const { theme } = useTheme();
+  const { language } = useLanguage();
+  const colors = Colors[theme];
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
   const handleSave = () => {
-    if (!name.trim()) return Alert.alert('Validation', 'Name is required.');
+    if (!name.trim()) return Alert.alert(t('validation', language), t('nameRequired', language));
 
     const customer: NewCustomer = {
       name: name.trim(),
@@ -34,50 +41,50 @@ export default function CreateCustomerScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-      <Text style={styles.label}>Name <Text style={styles.required}>*</Text></Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('name', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TextInput
-        style={styles.input}
-        placeholder="Customer or company name"
-        placeholderTextColor="#475569"
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('namePlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={name}
         onChangeText={setName}
         autoFocus
       />
 
-      <Text style={styles.label}>Address</Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('address', language)}</Text>
       <TextInput
-        style={styles.input}
-        placeholder="Street, city..."
-        placeholderTextColor="#475569"
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('addressPlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={address}
         onChangeText={setAddress}
       />
 
-      <Text style={styles.label}>Email</Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('email', language)}</Text>
       <TextInput
-        style={styles.input}
-        placeholder="email@example.com"
-        placeholderTextColor="#475569"
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('emailPlaceholder', language)}
+        placeholderTextColor={colors.icon}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
 
-      <Text style={styles.label}>Phone</Text>
+      <Text style={[styles.label, { color: colors.icon }]}>{t('phone', language)}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
         placeholder="+39 000 000 0000"
-        placeholderTextColor="#475569"
+        placeholderTextColor={colors.icon}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
       />
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.85}>
-        <Text style={styles.saveButtonText}>Save & Select Customer</Text>
+      <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.tint, shadowColor: colors.tint }]} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={[styles.saveButtonText, { color: colors.background }]}>{t('saveCustomer', language)}</Text>
       </TouchableOpacity>
 
     </ScrollView>
@@ -87,14 +94,12 @@ export default function CreateCustomerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
   },
   content: {
     padding: 20,
     paddingBottom: 48,
   },
   label: {
-    color: '#94a3b8',
     fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -102,33 +107,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 20,
   },
-  required: {
-    color: '#38bdf8',
-  },
+  required: {},
   input: {
-    backgroundColor: '#1e293b',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: '#f1f5f9',
     fontSize: 15,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   saveButton: {
-    backgroundColor: '#38bdf8',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 36,
-    shadowColor: '#38bdf8',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 6,
   },
   saveButtonText: {
-    color: '#0f172a',
     fontSize: 16,
     fontWeight: '700',
   },

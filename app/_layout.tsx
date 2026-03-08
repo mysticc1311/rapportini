@@ -1,33 +1,51 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Colors } from '../constants/theme';
+import { t } from '../constants/translations';
 import { CustomerProvider } from '../context/CustomerContext';
+import { LanguageProvider, useLanguage } from '../context/LanguageContext';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { initDatabase } from '../database/db';
 
-export default function RootLayout() {
+function RootLayoutContent() {
   useEffect(() => {
     initDatabase();
   }, []);
 
+  const { theme } = useTheme();
+  const { language } = useLanguage();
+  const colors = Colors[theme];
+
   return (
     <>
       <CustomerProvider>
-        <StatusBar style="light" />
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
-            headerStyle: { backgroundColor: '#0f172a' },
-            headerTintColor: '#f8fafc',
-            headerTitleStyle: { fontWeight: '700', fontSize: 18 },
-            contentStyle: { backgroundColor: '#0f172a' },
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerTitleStyle: { fontWeight: '700', fontSize: 18, color: colors.text },
+            contentStyle: { backgroundColor: colors.background },
             animation: 'slide_from_right',
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Rapportini' }} />
-          <Stack.Screen name="reports/create" options={{ title: 'New Report' }} />
-          <Stack.Screen name="reports/select-customer" options={{ title: 'Select Customer', presentation: 'modal' }} />
-          <Stack.Screen name="customers/create" options={{ title: 'New Customer', presentation: 'modal' }} />
+          <Stack.Screen name="index" options={{ title: t('fieldReports', language) }} />
+          <Stack.Screen name="reports/create" options={{ title: t('newReport', language) }} />
+          <Stack.Screen name="reports/select-customer" options={{ title: t('selectCustomer', language), presentation: 'modal' }} />
+          <Stack.Screen name="customers/create" options={{ title: t('newCustomer', language), presentation: 'modal' }} />
         </Stack>
       </CustomerProvider>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <LanguageProvider>
+      <ThemeProvider>
+        <RootLayoutContent />
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

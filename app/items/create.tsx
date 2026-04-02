@@ -4,87 +4,90 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text, TextInput, TouchableOpacity, View,
+  Text, TextInput, TouchableOpacity,
+  View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/theme';
 import { t } from '../../constants/translations';
-import { useCustomer } from '../../context/CustomerContext';
+import { useItems } from '../../context/ItemContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { addCustomer, getCustomerById, updateCustomer, deleteCustomer, NewCustomer } from '../../database/customers';
+import { addItem, getItemById, updateItem, deleteItem, NewItem } from '../../database/items';
 
-export default function CreateCustomerScreen() {
+export default function CreateItemScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { setSelectedCustomer } = useCustomer();
   const { theme } = useTheme();
   const { language } = useLanguage();
   const colors = Colors[theme];
-  
-  const customerId = params.id ? parseInt(params.id as string) : null;
-  const isEditMode = !!customerId;
-  
+  const { addItem: addToContext } = useItems();
+
+  const itemId = params.id ? parseInt(params.id as string) : null;
+  const isEditMode = !!itemId;
+
   const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [description, setDescription] = useState('');
+  const [cost, setCost] = useState('');
 
   /**
-   * Load customer data if editing
+   * Load item data if editing
    */
   useEffect(() => {
-    if (isEditMode && customerId) {
-      const customer = getCustomerById(customerId);
-      if (customer) {
-        setName(customer.name);
-        setAddress(customer.address || '');
-        setEmail(customer.email || '');
-        setPhone(customer.phone || '');
+    if (isEditMode && itemId) {
+      const item = getItemById(itemId);
+      if (item) {
+        setName(item.name);
+        setDescription(item.description || '');
+        setCost(item.cost.toString());
       }
     }
-  }, [customerId, isEditMode]);
+  }, [itemId, isEditMode]);
 
   /**
-   * Save customer (create or update)
+   * Save item (create or update)
    */
   const handleSave = () => {
-    if (!name.trim()) return Alert.alert(t('validation', language), t('nameRequired', language));
+    if (name.trim() === '') return Alert.alert(t('validation', language), t('itemNameRequired', language));
+    if (!cost.trim() || Number.isNaN(Number(cost)) || Number(cost) < 0) return Alert.alert(t('validation', language), t('itemCostRequired', language));
 
-    const customer: NewCustomer = {
+    const item: NewItem = {
       name: name.trim(),
-      address: address.trim() || null,
-      email: email.trim() || null,
-      phone: phone.trim() || null,
+      description: description.trim() || null,
+      cost: Number(cost),
     };
 
-    if (isEditMode && customerId) {
-      // Update existing customer
-      updateCustomer(customerId, customer);
+    if (isEditMode && itemId) {
+      // Update existing item
+      updateItem(itemId, item);
       router.back();
     } else {
-      // Create new customer
-      const result = addCustomer(customer);
-      setSelectedCustomer({ id: result.lastInsertRowId, name: name.trim() });
-      router.dismissTo('/reports/create');
+      // Create new item
+      const result = addItem(item);
+      const newItemId = result?.lastInsertRowId ?? null;
+
+      if (newItemId) {
+        addToContext({ id: newItemId, name: item.name, cost: item.cost });
+      }
+      router.back();
     }
   };
 
   /**
-   * Delete customer with confirmation
+   * Delete item with confirmation
    */
   const handleDelete = () => {
     Alert.alert(
-      t('deleteCustomer', language),
-      t('deleteCustomerQuestion', language, { name: name }),
+      t('deleteItem', language),
+      t('deleteItemQuestion', language, { name: name }),
       [
         { text: t('cancel', language), style: 'cancel' },
         {
           text: t('delete', language),
           style: 'destructive',
           onPress: () => {
-            if (customerId) {
-              deleteCustomer(customerId);
+            if (itemId) {
+              deleteItem(itemId);
               router.back();
             }
           },
@@ -94,50 +97,47 @@ export default function CreateCustomerScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-
-      <Text style={[styles.label, { color: colors.icon }]}>{t('name', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Name */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('itemName', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-        placeholder={t('namePlaceholder', language)}
+        placeholder={t('itemNamePlaceholder', language)}
         placeholderTextColor={colors.icon}
         value={name}
         onChangeText={setName}
-        autoFocus
       />
 
-      <Text style={[styles.label, { color: colors.icon }]}>{t('address', language)}</Text>
+      {/* Description */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('itemDescription', language)}</Text>
+      <TextInput
+        style={[styles.input, styles.textArea, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('itemDescriptionPlaceholder', language)}
+        placeholderTextColor={colors.icon}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={3}
+      />
+
+      {/* Cost */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('itemCost', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-        placeholder={t('addressPlaceholder', language)}
+        placeholder={t('itemCostPlaceholder', language)}
         placeholderTextColor={colors.icon}
-        value={address}
-        onChangeText={setAddress}
+        value={cost}
+        onChangeText={setCost}
+        keyboardType="decimal-pad"
       />
 
-      <Text style={[styles.label, { color: colors.icon }]}>{t('email', language)}</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-        placeholder={t('emailPlaceholder', language)}
-        placeholderTextColor={colors.icon}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <Text style={[styles.label, { color: colors.icon }]}>{t('phone', language)}</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-        placeholder="+39 000 000 0000"
-        placeholderTextColor={colors.icon}
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-
+      {/* Save */}
       <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.tint, shadowColor: colors.tint }]} onPress={handleSave} activeOpacity={0.85}>
-        <Text style={[styles.saveButtonText, { color: colors.background }]}>{isEditMode ? t('edit', language) : t('saveCustomer', language)}</Text>
+        <Text style={[styles.saveButtonText, { color: colors.background }]}>{isEditMode ? t('edit', language) : t('saveItem', language)}</Text>
       </TouchableOpacity>
       {isEditMode && (
         <TouchableOpacity style={[styles.deleteButton, { backgroundColor: '#dc2626', shadowColor: '#dc2626' }]} onPress={handleDelete} activeOpacity={0.85}>
@@ -145,7 +145,6 @@ export default function CreateCustomerScreen() {
           <Text style={[styles.deleteButtonText, { color: colors.background }]}>{t('delete', language)}</Text>
         </TouchableOpacity>
       )}
-
     </ScrollView>
   );
 }
@@ -173,6 +172,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     borderWidth: 1,
+  },
+  textArea: {
+    minHeight: 90,
+    textAlignVertical: 'top',
+    paddingTop: 14,
   },
   saveButton: {
     borderRadius: 14,

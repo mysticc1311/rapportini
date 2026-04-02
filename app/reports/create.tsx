@@ -11,23 +11,46 @@ import {
 import { Colors } from '../../constants/theme';
 import { t } from '../../constants/translations';
 import { useCustomer } from '../../context/CustomerContext';
+import { useItems } from '../../context/ItemContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { addReport, NewReport } from '../../database/reports';
+import { addItemToReport } from '../../database/reportItems';
 
+/**
+ * Screen for creating a new field report
+ * 
+ * Collects:
+ * - Activity description
+ * - Customer (selected from separate screen)
+ * - Date of work
+ * - Hours worked and hourly cost
+ * - Items used (selected from separate screen with quantities)
+ * - Optional notes
+ * 
+ * Saves to database:
+ * 1. Insert report record
+ * 2. Link selected items to report via report_items bridge table
+ */
 export default function CreateReportScreen() {
   const router = useRouter();
   const { selectedCustomer, setSelectedCustomer } = useCustomer();
   const { theme } = useTheme();
   const { language } = useLanguage();
   const colors = Colors[theme];
+  // Get selected items from context (populated when user returns from select-items screen)
+  const { selectedItems, clearItems } = useItems();
 
+  // Form state
   const [activity, setActivity] = useState('');
   const [date, setDate] = useState('');
-  const [timeStart, setTimeStart] = useState('');
-  const [timeEnd, setTimeEnd] = useState('');
+  const [hoursWorked, setHoursWorked] = useState('');
+  const [hourCost, setHourCost] = useState('');
   const [notes, setNotes] = useState('');
   
+  /**
+   * Format date input as DD/MM/YYYY while user types
+   */
   const formatDateInput = (text: string): string => {
     const digits = text.replace(/\D/g, '').slice(0, 8);
     if (digits.length <= 2) return digits;
@@ -35,29 +58,45 @@ export default function CreateReportScreen() {
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
   };
 
-  const formatTimeInput = (text: string): string => {
-    const digits = text.replace(/\D/g, '').slice(0, 4);
-    if (digits.length <= 2) return digits;
-    return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-  };
-
+  /**
+   * Save report with validation
+   * 1. Validate all required fields
+   * 2. Create report in database
+   * 3. Link each selected item to report with its quantity
+   * 4. Clear state and navigate back
+   */
   const handleSave = () => {
-    if (activity.trim() == '') return Alert.alert(t('validation', language), t('activityRequired', language))
+    // Validation checks
+    if (activity.trim() == '') return Alert.alert(t('validation', language), t('activityRequired', language));
     if (!selectedCustomer) return Alert.alert(t('validation', language), t('customerRequired', language));
     if (!date.trim()) return Alert.alert(t('validation', language), t('dateRequired', language));
-    if (!timeStart.trim() || !timeEnd.trim()) return Alert.alert(t('validation', language), t('timeRequired', language));
+    if (!hoursWorked.trim() || Number.isNaN(Number(hoursWorked)) || Number(hoursWorked) <= 0) return Alert.alert(t('validation', language), t('hoursRequired', language));
+    if (!hourCost.trim() || Number.isNaN(Number(hourCost)) || Number(hourCost) < 0) return Alert.alert(t('validation', language), t('costRequired', language));
 
+    // Build report object
     const report: NewReport = {
       activity: activity.trim(),
       customer_id: selectedCustomer.id,
       date: date.trim(),
-      time_start: timeStart.trim(),
-      time_end: timeEnd.trim(),
+      hours_worked: Number(hoursWorked),
+      hour_cost: Number(hourCost),
       notes: notes.trim() || null,
     };
 
-    addReport(report);
-    setSelectedCustomer(null); // resetta per la prossima volta
+    // Insert report and get the new report ID
+    const result = addReport(report);
+    const newReportId = result?.lastInsertRowId ?? null;
+
+    // Link items to report via bridge table with quantities
+    if (newReportId && selectedItems.length > 0) {
+      selectedItems.forEach((item) => {
+        addItemToReport(newReportId, item.id, item.quantity);
+      });
+    }
+
+    // Clean up state and return
+    setSelectedCustomer(null);
+    clearItems();
     router.back();
   };
 
@@ -103,29 +142,48 @@ export default function CreateReportScreen() {
         maxLength={10}
       />
       
-      {/* Time */}
-      <Text style={[styles.label, { color: colors.icon }]}>{t('time', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
-      <View style={styles.timeRow}>
-        <TextInput
-          style={[styles.input, styles.timeInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder={t('timePlaceholder', language)}
-          placeholderTextColor={colors.icon}
-          value={timeStart}
-          onChangeText={(text) => setTimeStart(formatTimeInput(text))}
-          keyboardType="number-pad"
-          maxLength={5}
-        />
-        <Ionicons name="arrow-forward" size={18} color="#475569" />
-        <TextInput
-          style={[styles.input, styles.timeInput, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-          placeholder={t('timePlaceholder', language)}
-          placeholderTextColor={colors.icon}
-          value={timeEnd}
-          onChangeText={(text) => setTimeEnd(formatTimeInput(text))}
-          keyboardType="number-pad"
-          maxLength={5}
-        />
-      </View>
+      {/* Hours Worked */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('hoursWorked', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('hoursWorkedPlaceholder', language)}
+        placeholderTextColor={colors.icon}
+        value={hoursWorked}
+        onChangeText={setHoursWorked}
+        keyboardType="decimal-pad"
+      />
+
+      {/* Hour Cost */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('hourCost', language)} <Text style={[styles.required, { color: colors.tint }]}>*</Text></Text>
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+        placeholder={t('hourCostPlaceholder', language)}
+        placeholderTextColor={colors.icon}
+        value={hourCost}
+        onChangeText={setHourCost}
+        keyboardType="decimal-pad"
+      />
+
+      {/* Items */}
+      <Text style={[styles.label, { color: colors.icon }]}>{t('itemsUsed', language)}</Text>
+      <TouchableOpacity
+        style={[styles.input, styles.itemsPicker, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => router.push({ pathname: '/reports/select-items' })}
+        activeOpacity={0.7}
+      >
+        {selectedItems.length > 0 ? (
+          <View style={styles.selectedItemsContainer}>
+            {selectedItems.map((item) => (
+              <View key={item.id} style={[styles.selectedItemBadge, { backgroundColor: colors.tint }]}>
+                <Text style={[styles.selectedItemBadgeText, { color: colors.background }]}>{item.name} × {item.quantity}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={[styles.itemsPlaceholder, { color: colors.icon }]}>{t('selectItems', language)}</Text>
+        )}
+        <Text style={[styles.chevron, { color: colors.icon }]}>›</Text>
+      </TouchableOpacity>
 
       {/* Notes */}
       <Text style={[styles.label, { color: colors.icon }]}>{t('notes', language)}</Text>
@@ -188,6 +246,34 @@ const styles = StyleSheet.create({
   },
   customerPlaceholder: {
     fontSize: 15,
+  },
+  itemsPicker: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    flexWrap: 'wrap',
+  },
+  selectedItemsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+  },
+  selectedItemBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginVertical: 2,
+  },
+  selectedItemBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  itemsPlaceholder: {
+    fontSize: 15,
+    flex: 1,
   },
   chevron: {
     fontSize: 22,

@@ -13,7 +13,7 @@ import { Colors } from '../constants/theme';
 import { t } from '../constants/translations';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { deleteReport, getAllReports, ReportWithCustomer } from '../database/reports';
+import { deleteReport, getAllReports, getReportTotalCost, ReportWithCustomer } from '../database/reports';
 import { shareReportsPdf } from '../utils/pdf';
 
 export default function ReportsListScreen() {
@@ -104,7 +104,7 @@ export default function ReportsListScreen() {
 
   const handleShareSelected = async () => {
     const toShare = reports.filter((r) => selectedIds.has(r.id));
-    await shareReportsPdf(toShare, t('fieldReports', language));
+    await shareReportsPdf(toShare, t('fieldReports', language), language);
     clearSelection();
   };
 
@@ -130,10 +130,17 @@ export default function ReportsListScreen() {
   };
 
   const handleShareSingle = async (item: ReportWithCustomer) => {
-    await shareReportsPdf([item], `Report - ${item.customer_name}`);
+    await shareReportsPdf([item], `Report - ${item.customer_name}`, language);
   };
 
-  const formatTime = (start: string, end: string) => `${start} ${<Ionicons name="arrow-forward" size={18} color="#475569" />} ${end}`;
+  /**
+   * Format report display: hours and total cost
+   * Total cost = labor cost (hours * hourly rate) + items cost (sum of item_cost * quantity)
+   */
+  const formatReportSummary = (reportId: number, hours: number) => {
+    const totalCost = getReportTotalCost(reportId);
+    return `${hours.toFixed(2)} ${t('hour_unit', language)} · ${totalCost.toFixed(2)} ${t('cost_unit', language)}`;
+  };
 
   const renderItem = ({ item }: { item: ReportWithCustomer }) => {
     const isSelected = selectedIds.has(item.id);
@@ -169,7 +176,7 @@ export default function ReportsListScreen() {
           <Text style={[styles.activity, { color: colors.text }]}>{item.activity}</Text>
           <View style={styles.timeRow}>
             <View style={[styles.timeBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Text style={[styles.timeText, { color: colors.icon }]}>{formatTime(item.time_start, item.time_end)}</Text>
+              <Text style={[styles.timeText, { color: colors.icon }]}>{formatReportSummary(item.id, item.hours_worked)}</Text>
             </View>
           </View>
           {item.notes ? <Text style={[styles.notes, { color: colors.icon }]}>{item.notes}</Text> : null}
@@ -196,7 +203,7 @@ export default function ReportsListScreen() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           ListEmptyComponent={renderEmpty}
-          contentContainerStyle={reports.length === 0 ? styles.listEmpty : styles.list}
+          contentContainerStyle={reports.length === 0 ? styles.listEmpty : [styles.list, isSelectionMode && styles.listCompact]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -220,6 +227,7 @@ export default function ReportsListScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: 16, paddingBottom: 100 },
+  listCompact: { paddingBottom: 40 },
   listEmpty: { flex: 1, padding: 16 },
   card: {
     borderRadius: 14,

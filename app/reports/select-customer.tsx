@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text, TextInput,
@@ -13,7 +14,7 @@ import { t } from '../../constants/translations';
 import { useCustomer } from '../../context/CustomerContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Customer, getAllCustomers } from '../../database/customers';
+import { Customer, getAllCustomers, deleteCustomer } from '../../database/customers';
 
 export default function SelectCustomerScreen() {
   const router = useRouter();
@@ -41,18 +42,56 @@ export default function SelectCustomerScreen() {
     router.push('/customers/create');
   };
 
+  /**
+   * Handle edit customer - navigate to create screen with customer id
+   */
+  const handleEdit = (customer: Customer) => {
+    router.push({ pathname: '/customers/create', params: { id: customer.id.toString() } });
+  };
+
+  /**
+   * Handle delete customer with confirmation
+   */
+  const handleDeleteCustomer = (customer: Customer) => {
+    Alert.alert(
+      t('deleteCustomer', language),
+      t('deleteCustomerQuestion', language, { name: customer.name }),
+      [
+        { text: t('cancel', language), style: 'cancel' },
+        {
+          text: t('delete', language),
+          style: 'destructive',
+          onPress: () => {
+            deleteCustomer(customer.id);
+            setCustomers(getAllCustomers());
+          },
+        },
+      ]
+    );
+  };
+
   const renderItem = ({ item }: { item: Customer }) => (
-    <TouchableOpacity style={[styles.item, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => handleSelect(item)} activeOpacity={0.7}>
-      <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
-        <Text style={[styles.avatarText, { color: colors.background }]}>{item.name.charAt(0).toUpperCase()}</Text>
+    <View style={[styles.itemContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <TouchableOpacity style={styles.itemContent} onPress={() => handleSelect(item)} activeOpacity={0.7}>
+        <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
+          <Text style={[styles.avatarText, { color: colors.background }]}>{item.name.charAt(0).toUpperCase()}</Text>
+        </View>
+        <View style={styles.itemInfo}>
+          <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+          {item.email ? <Text style={[styles.itemSub, { color: colors.icon }]}>{item.email}</Text> : null}
+          {item.phone ? <Text style={[styles.itemSub, { color: colors.icon }]}>{item.phone}</Text> : null}
+        </View>
+        <Text style={[styles.chevron, { color: colors.icon }]}>›</Text>
+      </TouchableOpacity>
+      <View style={[styles.actions, { borderLeftColor: colors.border }]}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)} activeOpacity={0.6}>
+          <Ionicons name="pencil" size={18} color={colors.tint} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={() => handleDeleteCustomer(item)} activeOpacity={0.6}>
+          <Ionicons name="trash-outline" size={18} color="#dc2626" />
+        </TouchableOpacity>
       </View>
-      <View style={styles.itemInfo}>
-        <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
-        {item.email ? <Text style={[styles.itemSub, { color: colors.icon }]}>{item.email}</Text> : null}
-        {item.phone ? <Text style={[styles.itemSub, { color: colors.icon }]}>{item.phone}</Text> : null}
-      </View>
-      <Text style={[styles.chevron, { color: colors.icon }]}>›</Text>
-    </TouchableOpacity>
+    </View>
   );
 
   const renderEmpty = () => (
@@ -127,6 +166,30 @@ const styles = StyleSheet.create({
   listEmpty: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  itemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    borderLeftWidth: 1,
+    alignItems: 'center',
+  },
+  actionButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   item: {
     flexDirection: 'row',

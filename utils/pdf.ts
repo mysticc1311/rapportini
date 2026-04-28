@@ -1,14 +1,14 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { ReportWithCustomer, getReportTotalCost } from '../database/reports';
-import { getItemsOfReport } from '../database/reportItems';
 import { t } from '../constants/translations';
+import { getItemsOfReport } from '../database/reportItems';
+import { ReportWithCustomer, getReportTotalCost } from '../database/reports';
 
 /**
  * Build report section with all details including items
  * Displays: date, customer, activity, hours, items with quantities, total cost, and notes
  */
-const reportToSection = (report: ReportWithCustomer, language: 'en' | 'it' = 'en'): string => {
+const reportToSection = (report: ReportWithCustomer, language: 'en' | 'it' = 'en', index: number = 1, total: number = 1): string => {
   const items = getItemsOfReport(report.id);
   const totalCost = getReportTotalCost(report.id);
   
@@ -25,6 +25,7 @@ const reportToSection = (report: ReportWithCustomer, language: 'en' | 'it' = 'en
 
   return `
     <div class="report-section">
+      <div class="report-page-header">${index}/${total}</div>
       <div class="report-header">
         <div class="header-row">
           <div class="header-col">
@@ -89,7 +90,7 @@ const reportToSection = (report: ReportWithCustomer, language: 'en' | 'it' = 'en
 
 /**
  * Build complete HTML document for PDF export
- * Includes styling, report sections with items and totals, plus watermark
+ * Includes styling and report sections with items and totals
  */
 const buildHtml = (reports: ReportWithCustomer[], title: string, language: 'en' | 'it' = 'en'): string => `
   <html>
@@ -99,25 +100,33 @@ const buildHtml = (reports: ReportWithCustomer[], title: string, language: 'en' 
         body {
           font-family: Helvetica, Arial, sans-serif;
           padding: 32px;
+          padding-bottom: 60px;
           color: #1e293b;
           position: relative;
+          counter-reset: page-counter;
         }
-        .watermark {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%) rotate(-45deg);
-          font-size: 80px;
-          color: rgba(0, 0, 0, 0.05);
-          font-weight: bold;
-          z-index: -1;
-          pointer-events: none;
-          width: 100%;
-          text-align: center;
-          line-height: 1;
+        @page {
+          margin-bottom: 40px;
+          margin-top: 40px;
         }
         h1 { font-size: 28px; margin-bottom: 4px; color: #0f172a; }
         p.subtitle { color: #64748b; font-size: 12px; margin-bottom: 32px; }
+        .header-container {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          margin-bottom: 32px;
+        }
+        .header-content {
+          flex: 1;
+        }
+        .report-page-header {
+          font-size: 11px;
+          color: #64748b;
+          margin-bottom: 12px;
+          text-align: right;
+          font-weight: 500;
+        }
         .report-section {
           page-break-inside: avoid;
           margin-bottom: 40px;
@@ -125,6 +134,11 @@ const buildHtml = (reports: ReportWithCustomer[], title: string, language: 'en' 
           border-radius: 6px;
           padding: 20px;
           background: #ffffff;
+          counter-increment: page-counter;
+          margin-top: 60px;
+        }
+        .report-section:first-of-type {
+          margin-top: 0;
         }
         .report-header {
           border-bottom: 2px solid #0f172a;
@@ -221,13 +235,27 @@ const buildHtml = (reports: ReportWithCustomer[], title: string, language: 'en' 
           font-size: 12px;
           line-height: 1.5;
         }
+        .page-footer {
+          position: fixed;
+          bottom: 20px;
+          left: 0;
+          right: 0;
+          text-align: center;
+          font-size: 11px;
+          color: #64748b;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 8px;
+        }
       </style>
     </head>
     <body>
-      <div class="watermark">rapportini</div>
-      <h1>${title}</h1>
-      <p class="subtitle">Generated on ${new Date().toLocaleDateString('it-IT')}</p>
-      ${reports.map(report => reportToSection(report, language)).join('')}
+      <div class="header-container">
+        <div class="header-content">
+          <h1>${title}</h1>
+          <p class="subtitle">Generated on ${new Date().toLocaleDateString('it-IT')}</p>
+        </div>
+      </div>
+      ${reports.map((report, index) => reportToSection(report, language, index + 1, reports.length)).join('')}
     </body>
   </html>
 `;

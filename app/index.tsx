@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator, Alert,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Colors } from '../constants/theme';
 import { t } from '../constants/translations';
@@ -55,33 +55,18 @@ export default function ReportsListScreen() {
       navigation.setOptions({
         headerLeft: undefined,
         headerRight: () => (
-          <View style={{ flexDirection: 'row', gap: 12, marginRight: 16 }}>
-            <TouchableOpacity
-              onPress={() => setLanguage(language === 'en' ? 'it' : 'en')}
-              style={{ padding: 8 }}
-              activeOpacity={0.6}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>
-                {language === 'en' ? 'IT' : 'EN'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setMode(theme === 'dark' ? 'light' : 'dark')}
-              style={{ padding: 8 }}
-              activeOpacity={0.6}
-            >
-              <Ionicons
-                name={theme === 'dark' ? 'sunny' : 'moon'}
-                size={22}
-                color={colors.text}
-              />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/settings')}
+            style={{ padding: 8, marginRight: 8 }}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
         ),
         title: t('fieldReports', language),
       });
     }
-  }, [isSelectionMode, selectedIds, theme, language, colors.text, setMode, setLanguage]);
+  }, [isSelectionMode, selectedIds, theme, language, colors.text, router]);
 
   const clearSelection = () => setSelectedIds(new Set());
 
@@ -139,7 +124,7 @@ export default function ReportsListScreen() {
    */
   const formatReportSummary = (reportId: number, hours: number) => {
     const totalCost = getReportTotalCost(reportId);
-    return `${hours.toFixed(2)} ${t('hour_unit', language)} · ${totalCost.toFixed(2)} ${t('cost_unit', language)}`;
+    return `${hours.toFixed(2)}${t('hour_unit', language)} · ${totalCost.toFixed(2)}${t('cost_unit', language)}`;
   };
 
   const renderItem = ({ item }: { item: ReportWithCustomer }) => {

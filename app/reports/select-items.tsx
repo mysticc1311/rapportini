@@ -2,19 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text, TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text, TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { t } from '../../constants/translations';
 import { useItems } from '../../context/ItemContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { getAllItems, Item, deleteItem } from '../../database/items';
+import { deleteItem, getAllItems, Item } from '../../database/items';
 
 /**
  * Screen for selecting items to include in a report
@@ -195,7 +195,6 @@ export default function SelectItemsScreen() {
           placeholderTextColor={colors.icon}
           value={query}
           onChangeText={setQuery}
-          autoFocus
           clearButtonMode="while-editing"
         />
       </View>
@@ -350,7 +349,7 @@ const styles = StyleSheet.create({
   },
   bottomContainer: {
     position: 'absolute',
-    bottom: 16,
+    bottom: 32,
     left: 16,
     right: 16,
     gap: 10,

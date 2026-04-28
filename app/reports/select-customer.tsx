@@ -2,19 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text, TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text, TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Colors } from '../../constants/theme';
 import { t } from '../../constants/translations';
 import { useCustomer } from '../../context/CustomerContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { Customer, getAllCustomers, deleteCustomer } from '../../database/customers';
+import { Customer, deleteCustomer, getAllCustomers } from '../../database/customers';
 
 export default function SelectCustomerScreen() {
   const router = useRouter();
@@ -111,7 +111,6 @@ export default function SelectCustomerScreen() {
           placeholderTextColor={colors.icon}
           value={query}
           onChangeText={setQuery}
-          autoFocus
           clearButtonMode="while-editing"
         />
       </View>
@@ -235,7 +234,7 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 28,
+    bottom: 44,
     left: 20,
     right: 20,
   },

@@ -1,19 +1,18 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
   StyleSheet,
-  Text, TextInput, TouchableOpacity,
-  View,
+  Text, TextInput, TouchableOpacity
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/theme';
 import { t } from '../../constants/translations';
 import { useItems } from '../../context/ItemContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
-import { addItem, getItemById, updateItem, deleteItem, NewItem } from '../../database/items';
+import { addItem, deleteItem, getItemById, NewItem, updateItem } from '../../database/items';
 
 export default function CreateItemScreen() {
   const router = useRouter();
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 48,
+    paddingBottom: 80,
   },
   label: {
     fontSize: 13,
